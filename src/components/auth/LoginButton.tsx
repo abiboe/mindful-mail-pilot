@@ -2,17 +2,29 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Mail } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface LoginButtonProps {
   platform: 'gmail' | 'outlook';
 }
 
 export const LoginButton: React.FC<LoginButtonProps> = ({ platform }) => {
-  const { login, isLoading } = useAuth();
-
   const handleLogin = async () => {
-    await login(platform);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: platform === 'gmail' ? 'google' : 'azure',
+      options: {
+        redirectTo: window.location.origin,
+        // You can add scopes here if needed
+        // scopes: 'email profile'
+      }
+    });
+
+    if (error) {
+      toast.error(`Login with ${platform} failed`, {
+        description: error.message
+      });
+    }
   };
 
   return (
@@ -25,10 +37,9 @@ export const LoginButton: React.FC<LoginButtonProps> = ({ platform }) => {
           : 'border-[#0078D4] hover:bg-[#0078D4]/10 text-[#0078D4]'
       }`}
       onClick={handleLogin}
-      disabled={isLoading}
     >
       <Mail className="mr-2 h-4 w-4" />
-      {isLoading ? 'Connecting...' : `Continue with ${platform === 'gmail' ? 'Gmail' : 'Outlook'}`}
+      Continue with {platform === 'gmail' ? 'Gmail' : 'Outlook'}
     </Button>
   );
 };
