@@ -4,10 +4,13 @@ import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { AuthState } from '@/types';
 import { LoginButton } from './LoginButton';
+import { SignUpForm } from './SignUpForm';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface AuthContextType {
   authState: AuthState;
   logout: () => Promise<void>;
+  refreshSession: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -18,6 +21,7 @@ export const AuthContext = createContext<AuthContextType>({
     error: null,
   },
   logout: async () => {},
+  refreshSession: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -28,10 +32,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     error: null,
   });
 
+  const refreshSession = async () => {
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) {
+        console.error('Session refresh error:', error);
+        return;
+      }
+      
+      if (data.session) {
+        setAuthState({
+          isAuthenticated: true,
+          isLoading: false,
+          user: data.session.user,
+          error: null,
+        });
+      }
+    } catch (error) {
+      console.error('Session refresh error:', error);
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        
         if (session) {
           setAuthState({
             isAuthenticated: true,
@@ -53,12 +80,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           toast.success('Logged in successfully!');
         } else if (event === 'SIGNED_OUT') {
           toast.info('Logged out successfully');
+        } else if (event === 'USER_UPDATED') {
+          toast.info('User profile updated');
+        } else if (event === 'PASSWORD_RECOVERY') {
+          toast.info('Password recovery email sent');
         }
       }
     );
 
     // Check current session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.email);
       if (session) {
         setAuthState({
           isAuthenticated: true,
@@ -86,7 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   return (
-    <AuthContext.Provider value={{ authState, logout }}>
+    <AuthContext.Provider value={{ authState, logout, refreshSession }}>
       {children}
     </AuthContext.Provider>
   );
@@ -101,13 +133,22 @@ export const AuthScreen: React.FC = () => {
           <p className="mt-2 text-muted-foreground">Your intelligent email assistant</p>
         </div>
         
-        <div className="space-y-4 pt-4">
-          <p className="text-center text-sm text-muted-foreground">Sign in to continue:</p>
-          <div className="flex flex-col gap-4">
-            <LoginButton platform="gmail" />
-            <LoginButton platform="outlook" />
-          </div>
-        </div>
+        <Tabs defaultValue="login" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="login">Sign In</TabsTrigger>
+            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          </TabsList>
+          <TabsContent value="login" className="space-y-4 pt-4">
+            <p className="text-center text-sm text-muted-foreground">Sign in with:</p>
+            <div className="flex flex-col gap-4">
+              <LoginButton platform="gmail" />
+              <LoginButton platform="outlook" />
+            </div>
+          </TabsContent>
+          <TabsContent value="signup" className="space-y-4 pt-4">
+            <SignUpForm />
+          </TabsContent>
+        </Tabs>
         
         <div className="mt-8 text-center text-xs text-muted-foreground">
           <p>By signing in, you agree to our Terms of Service and Privacy Policy.</p>

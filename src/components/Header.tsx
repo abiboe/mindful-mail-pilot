@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Bell, Search, Settings } from 'lucide-react';
+import { Bell, Search, Settings, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   DropdownMenu, 
@@ -12,9 +12,19 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
 export const Header: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshSession } = useAuth();
+
+  const handleRefreshSession = async () => {
+    try {
+      await refreshSession();
+      toast.success('Session refreshed successfully');
+    } catch (error) {
+      toast.error('Failed to refresh session');
+    }
+  };
 
   return (
     <header className="flex h-16 items-center justify-between border-b bg-card px-6 shadow-sm">
@@ -30,6 +40,13 @@ export const Header: React.FC = () => {
       </div>
 
       <div className="flex items-center gap-3">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={handleRefreshSession}
+          title="Refresh session">
+          <RefreshCw className="h-5 w-5" />
+        </Button>
         <Button variant="ghost" size="icon">
           <Bell className="h-5 w-5" />
         </Button>

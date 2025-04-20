@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthScreen } from '@/components/auth/AuthProvider';
 import { Header } from '@/components/Header';
@@ -11,11 +11,16 @@ import { useEmails } from '@/hooks/useEmails';
 import { useTasks } from '@/hooks/useTasks';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const Index = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, refreshSession } = useAuth();
   const [selectedView, setSelectedView] = useState('inbox');
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   
   const { 
     emails, 
@@ -27,6 +32,39 @@ const Index = () => {
   } = useEmails();
   
   const { tasks, todayTasks, overdueTasks } = useTasks();
+  
+  // Handle URL params for authentication flow
+  useEffect(() => {
+    const handleAuthRedirect = async () => {
+      // Check for auth token in URL
+      const access_token = searchParams.get('access_token');
+      const refresh_token = searchParams.get('refresh_token');
+      const type = searchParams.get('type');
+      
+      if (access_token && refresh_token && type) {
+        try {
+          // Set the session from URL parameters
+          const { error } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+          
+          if (error) throw error;
+          
+          await refreshSession();
+          toast.success('Email verified successfully!');
+          
+          // Remove auth parameters from URL
+          navigate('/', { replace: true });
+        } catch (error) {
+          console.error('Auth redirect error:', error);
+          toast.error('Authentication failed. Please try again.');
+        }
+      }
+    };
+
+    handleAuthRedirect();
+  }, [searchParams, navigate, refreshSession]);
   
   // Handle loading state
   if (isLoading) {
