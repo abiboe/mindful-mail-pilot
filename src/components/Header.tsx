@@ -41,16 +41,16 @@ export const Header: React.FC = () => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full">
               <Avatar>
-                <AvatarImage src={user?.avatar} />
+                <AvatarImage src={user?.user_metadata?.avatar_url} />
                 <AvatarFallback>
-                  {user?.name?.split(' ').map(name => name[0]).join('')}
+                  {user?.user_metadata?.full_name?.[0] || user?.email?.[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <div className="flex flex-col space-y-1 p-2">
-              <p className="font-medium">{user?.name}</p>
+              <p className="font-medium">{user?.user_metadata?.full_name || user?.email}</p>
               <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
             <DropdownMenuSeparator />
