@@ -9,8 +9,7 @@ interface LoginButtonProps {
 }
 
 export const LoginButton: React.FC<LoginButtonProps> = ({ platform }) => {
-  const { login, authState } = useAuth();
-  const isLoading = authState.isLoading;
+  const { login, isLoading } = useAuth();
 
   const handleLogin = async () => {
     await login(platform);
