@@ -9,7 +9,6 @@ import { EmailSummary } from '@/components/EmailSummary';
 import { TaskList } from '@/components/TaskList';
 import { useEmails } from '@/hooks/useEmails';
 import { useTasks } from '@/hooks/useTasks';
-import { Email } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SidebarProvider } from '@/components/ui/sidebar';
 

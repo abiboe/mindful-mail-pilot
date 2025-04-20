@@ -1,13 +1,13 @@
 
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 import { toast } from "sonner";
-import { AuthState, User } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { AuthState } from '@/types';
 import { LoginButton } from './LoginButton';
 
 interface AuthContextType {
   authState: AuthState;
-  login: (platform: 'gmail' | 'outlook') => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -17,8 +17,7 @@ export const AuthContext = createContext<AuthContextType>({
     user: null,
     error: null,
   },
-  login: async () => {},
-  logout: () => {},
+  logout: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -30,83 +29,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   useEffect(() => {
-    // Check if user is already authenticated in localStorage
-    const user = localStorage.getItem('user');
-    
-    if (user) {
-      try {
-        const parsedUser = JSON.parse(user);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session) {
+          setAuthState({
+            isAuthenticated: true,
+            isLoading: false,
+            user: session.user,
+            error: null,
+          });
+        } else {
+          setAuthState({
+            isAuthenticated: false,
+            isLoading: false,
+            user: null,
+            error: null,
+          });
+        }
+        
+        // Show toast based on auth event
+        if (event === 'SIGNED_IN') {
+          toast.success('Logged in successfully!');
+        } else if (event === 'SIGNED_OUT') {
+          toast.info('Logged out successfully');
+        }
+      }
+    );
+
+    // Check current session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
         setAuthState({
           isAuthenticated: true,
           isLoading: false,
-          user: parsedUser,
+          user: session.user,
           error: null,
         });
-      } catch (error) {
-        localStorage.removeItem('user');
-        setAuthState({
-          isAuthenticated: false,
-          isLoading: false,
-          user: null,
-          error: 'Invalid session data',
-        });
+      } else {
+        setAuthState(prev => ({ ...prev, isLoading: false }));
       }
-    } else {
-      setAuthState(prev => ({ ...prev, isLoading: false }));
-    }
-  }, []);
-
-  // For demo purposes, we'll simulate auth
-  const login = async (platform: 'gmail' | 'outlook') => {
-    setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-    
-    try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Mock user data
-      const mockUser: User = {
-        id: 'user-123',
-        name: 'John Doe',
-        email: platform === 'gmail' ? 'john.doe@gmail.com' : 'john.doe@outlook.com',
-        avatar: 'https://i.pravatar.cc/150?img=32',
-      };
-      
-      // Save to localStorage
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      
-      setAuthState({
-        isAuthenticated: true,
-        isLoading: false,
-        user: mockUser,
-        error: null,
-      });
-      
-      toast.success(`Logged in with ${platform} successfully!`);
-    } catch (error) {
-      console.error('Login error:', error);
-      setAuthState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: 'Authentication failed. Please try again.',
-      }));
-      toast.error('Authentication failed. Please try again.');
-    }
-  };
-  
-  const logout = () => {
-    localStorage.removeItem('user');
-    setAuthState({
-      isAuthenticated: false,
-      isLoading: false,
-      user: null,
-      error: null,
     });
-    toast.info('Logged out successfully');
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+  
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to log out. Please try again.');
+    }
   };
   
   return (
-    <AuthContext.Provider value={{ authState, login, logout }}>
+    <AuthContext.Provider value={{ authState, logout }}>
       {children}
     </AuthContext.Provider>
   );
