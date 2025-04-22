@@ -22,7 +22,8 @@ export const MessageReader = () => {
     
     setIsLoading(true);
     try {
-      const response = await fetch('https://usgducuowlhfkdbatfik.functions.supabase.co/analyze-message', {
+      // Fixed URL format to ensure proper connection to Supabase Edge Function
+      const response = await fetch('https://usgducuowlhfkdbatfik.supabase.co/functions/v1/analyze-message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
