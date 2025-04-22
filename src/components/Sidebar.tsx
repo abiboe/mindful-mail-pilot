@@ -16,7 +16,7 @@ import {
   Clock, ArrowRight, Folder, User, BookOpen 
 } from 'lucide-react';
 import { useEmails } from '@/hooks/useEmails';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface SidebarProps {
   activeItem?: string;
@@ -26,6 +26,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ activeItem = 'inbox', onSelectItem }) => {
   const { unreadCount } = useEmails();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const folderItems = [
     { id: 'work', label: 'Work', icon: Folder },
@@ -55,6 +56,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeItem = 'inbox', onSelect
     }
   };
 
+  // Determine if message-reader is active based on URL path
+  const isMessageReaderActive = location.pathname === '/message-reader';
+
   return (
     <SidebarContainer>
       <SidebarContent>
@@ -65,7 +69,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeItem = 'inbox', onSelect
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton 
-                    className={activeItem === item.id ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''}
+                    className={
+                      (activeItem === item.id || 
+                       (item.id === 'message-reader' && isMessageReaderActive)) 
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
+                        : ''
+                    }
                     onClick={() => handleClick(item.id)}
                   >
                     <item.icon className="h-5 w-5" />

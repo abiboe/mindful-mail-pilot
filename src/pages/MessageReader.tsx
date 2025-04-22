@@ -21,8 +21,9 @@ export const MessageReader = () => {
     }
     
     setIsLoading(true);
+    setSummary(''); // Clear previous summary
+    
     try {
-      // Fixed URL format to ensure proper connection to Supabase Edge Function
       const response = await fetch('https://usgducuowlhfkdbatfik.supabase.co/functions/v1/analyze-message', {
         method: 'POST',
         headers: {
@@ -32,6 +33,8 @@ export const MessageReader = () => {
       });
       
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
       
@@ -51,7 +54,16 @@ export const MessageReader = () => {
       <div className="flex min-h-screen flex-col">
         <Header />
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-muted-foreground">Please log in to use the Message Reader</p>
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="text-center">Authentication Required</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-center text-muted-foreground">
+                Please log in to use the Message Reader feature.
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
