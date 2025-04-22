@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export const MessageReader = () => {
   const { isAuthenticated } = useAuth();
@@ -14,9 +15,14 @@ export const MessageReader = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleAnalyze = async () => {
+    if (!message.trim()) {
+      toast.error('Please enter a message to analyze');
+      return;
+    }
+    
     setIsLoading(true);
     try {
-      const response = await fetch('https://usgducuowlhfkdbatfik.functions.supabase.co/functions/v1/analyze-message', {
+      const response = await fetch('https://usgducuowlhfkdbatfik.functions.supabase.co/analyze-message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -24,10 +30,16 @@ export const MessageReader = () => {
         body: JSON.stringify({ message }),
       });
       
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
       const data = await response.json();
       setSummary(data.summary);
+      toast.success('Message analyzed successfully');
     } catch (error) {
       console.error('Error analyzing message:', error);
+      toast.error('Failed to analyze message. Please try again.');
     } finally {
       setIsLoading(false);
     }

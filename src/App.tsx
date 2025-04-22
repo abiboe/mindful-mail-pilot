@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import Index from "./pages/Index";
-import MessageReader from "./pages/MessageReader";
+import { MessageReader } from "./pages/MessageReader";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

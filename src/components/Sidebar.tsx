@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   Sidebar as SidebarContainer, 
@@ -15,7 +16,7 @@ import {
   Clock, ArrowRight, Folder, User, BookOpen 
 } from 'lucide-react';
 import { useEmails } from '@/hooks/useEmails';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 interface SidebarProps {
   activeItem?: string;
