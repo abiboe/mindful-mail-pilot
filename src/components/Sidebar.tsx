@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Sidebar as SidebarContainer, 
@@ -12,10 +11,11 @@ import {
 } from '@/components/ui/sidebar';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Inbox, Mail, Calendar, ListCheck, Star, Clock, 
-  ArrowRight, Folder, User
+  Inbox, Mail, Calendar, ListCheck, Star, 
+  Clock, ArrowRight, Folder, User, BookOpen 
 } from 'lucide-react';
 import { useEmails } from '@/hooks/useEmails';
+import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
   activeItem?: string;
@@ -24,13 +24,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeItem = 'inbox', onSelectItem }) => {
   const { unreadCount } = useEmails();
-
-  const mainItems = [
-    { id: 'inbox', label: 'Inbox', icon: Inbox, count: unreadCount },
-    { id: 'important', label: 'Important', icon: Star },
-    { id: 'tasks', label: 'Tasks', icon: ListCheck },
-    { id: 'calendar', label: 'Calendar', icon: Calendar },
-  ];
+  const navigate = useNavigate();
 
   const folderItems = [
     { id: 'work', label: 'Work', icon: Folder },
@@ -38,8 +32,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeItem = 'inbox', onSelect
     { id: 'archive', label: 'Archive', icon: Folder },
   ];
 
+  const mainItems = [
+    { id: 'inbox', label: 'Inbox', icon: Inbox, count: unreadCount },
+    { id: 'important', label: 'Important', icon: Star },
+    { id: 'tasks', label: 'Tasks', icon: ListCheck },
+    { id: 'calendar', label: 'Calendar', icon: Calendar },
+    { 
+      id: 'message-reader', 
+      label: 'Message Reader', 
+      icon: BookOpen,
+      action: () => navigate('/message-reader')
+    },
+  ];
+
   const handleClick = (item: string) => {
-    onSelectItem(item);
+    const menuItem = mainItems.find(i => i.id === item);
+    if (menuItem?.action) {
+      menuItem.action();
+    } else {
+      onSelectItem(item);
+    }
   };
 
   return (
